@@ -34,13 +34,16 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(BASE_DIR, "a
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# ✅ enable CORS *after* app is created
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = "index"
+
 CORS(
     app,
     resources={r"/*": {
         "origins": [
-            "https://your-frontend.vercel.app",  # replace with your actual Vercel frontend URL
-            "http://localhost:3000"               # optional for local testing
+            "https://<your-frontend>.vercel.app",  # replace this with your real Vercel frontend URL
+            "http://localhost:3000"
         ]
     }}
 )
