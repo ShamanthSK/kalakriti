@@ -1,20 +1,54 @@
 import os
-from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash
+from datetime import datetime, date
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+from flask_login import (
+    LoginManager,
+    login_user,
+    logout_user,
+    login_required,
+    current_user,
+    UserMixin,
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy import or_
-import pickle
 from flask_cors import CORS
-CORS(app)  # allow your Vercel frontend to call this API
-
+import pickle
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
-from datetime import datetime, date
+
+
+# --------------------------------------------------
+# App setup
+# --------------------------------------------------
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "change-this-secret-to-something-random"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(BASE_DIR, "app.db")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# ✅ enable CORS *after* app is created
+CORS(
+    app,
+    resources={r"/*": {
+        "origins": [
+            "https://your-frontend.vercel.app",  # replace with your actual Vercel frontend URL
+            "http://localhost:3000"               # optional for local testing
+        ]
+    }}
+)
+
+# Database + login setup
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = "index"
 
 def preprocess_user_features(users):
     """Convert user data into numerical features for clustering"""
@@ -217,6 +251,16 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'index'
+
+CORS(
+    app,
+    resources={r"/*": {
+        "origins": [
+            "https://<your-frontend>.vercel.app",  # put your Vercel URL here
+            "http://localhost:3000"                # optional for local dev
+        ]
+    }}
+)
 
 # -----------------------
 # Database model
@@ -674,8 +718,9 @@ def user_dashboard(user_id):
 # -----------------------
 # Run
 # -----------------------
-if __name__ == '__main__':
+if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     with app.app_context():
         db.create_all()
-    app.run(debug=True,host='0.0.0.0',port="5050")
+    # debug=False for Render
+    app.run(host="0.0.0.0", port=5050, debug=False)
