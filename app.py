@@ -48,10 +48,6 @@ CORS(
     }}
 )
 
-# Database + login setup
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = "index"
 
 def preprocess_user_features(users):
     """Convert user data into numerical features for clustering"""
